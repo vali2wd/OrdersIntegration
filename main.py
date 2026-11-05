@@ -1,16 +1,35 @@
-# This is a sample Python script.
+import logging
+import signal
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import boto3
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from MQ.order_dto import StoreOrderRequest
+from MQ.worker import QueueConsumer
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+log = logging.getLogger("orders")
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+def test_if_consuming_works(store_order: StoreOrderRequest) -> None:
+    print("Consuming SQS works.", store_order)
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s")
+
+    sqs = boto3.client(
+        "sqs",
+        endpoint_url="http://localhost:9324",
+        region_name="elasticmq",
+        aws_access_key_id="x",
+        aws_secret_access_key="x",
+    )
+    queue_url = sqs.get_queue_url(QueueName="orders.fifo")["QueueUrl"]
+    dlq_url = sqs.get_queue_url(QueueName="orders-dlq.fifo")["QueueUrl"]
+
+    consumer = QueueConsumer(sqs, queue_url, dlq_url, model=StoreOrderRequest, handler=test_if_consuming_works)
+    signal.signal(signal.SIGINT, lambda signum, frame: consumer.stop())
+    signal.signal(signal.SIGTERM, lambda signum, frame: consumer.stop())
+    consumer.run()
+
+
+if __name__ == "__main__":
+    main()
