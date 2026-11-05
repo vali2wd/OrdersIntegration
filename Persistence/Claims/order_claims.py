@@ -24,7 +24,7 @@ WHERE order_id = ? AND status = 'ordering';
 
 MARK_FAIL="""
 UPDATE dbo.order_claims
-SET status = 'failed', operator_ref = ?, updated_at = SYSUTCDATETIME()
+SET status = 'failed', last_error = ?, updated_at = SYSUTCDATETIME()
 WHERE order_id = ? AND status = 'ordering';
 """
 

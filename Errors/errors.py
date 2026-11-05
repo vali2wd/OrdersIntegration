@@ -1,7 +1,7 @@
 class AuthError(Exception):
     """"""
 
-class PermanentError(BaseException):
+class PermanentError(Exception):
     """Retrying won't help: bad data, rejected by the downstream API."""
 
 class TransientError(Exception):

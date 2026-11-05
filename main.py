@@ -33,7 +33,6 @@ def main() -> None:
     queue_url = sqs.get_queue_url(QueueName="orders.fifo")["QueueUrl"]
     dlq_url = sqs.get_queue_url(QueueName="orders-dlq.fifo")["QueueUrl"]
 
-    signal.signal(signal.SIGINT, lambda signum, frame: consumer.stop())
     signal.signal(signal.SIGTERM, lambda signum, frame: consumer.stop())
 
     with httpx.Client(
