@@ -14,5 +14,5 @@ class WMSOrderRequest(BaseModel):
 def to_WMSRequest(order: StoreOrderRequest) -> WMSOrderRequest:
     return WMSOrderRequest(
         order_number = order.order_id,
-        reference_id = order.order_id, #TODO: e corect sa pasam order_id pentru reference_id?
+        reference_id = "reference-" + order.order_id, #TODO: e corect sa pasam order_id pentru reference_id?
     )

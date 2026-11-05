@@ -8,16 +8,9 @@ from enum import StrEnum
 from botocore.exceptions import BotoCoreError, ClientError
 from pydantic import BaseModel, ValidationError
 
+from Errors import PermanentError, TransientError
+
 log = logging.getLogger("consumer")
-
-
-class PermanentError(Exception):
-    """Retrying won't help: bad data, rejected by the downstream API."""
-
-
-class TransientError(Exception):
-    """Might work later: timeouts, 5xx, 429 after retries ran out."""
-
 
 class Outcome(StrEnum):
     DONE = "done"
