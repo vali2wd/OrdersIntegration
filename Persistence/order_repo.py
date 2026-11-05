@@ -1,7 +1,7 @@
 import logging
 from contextlib import closing
 import pyodbc
-from Claims.order_claims import *
+from Persistence.Claims.order_claims import *
 
 log = logging.getLogger("repository")
 
@@ -39,12 +39,12 @@ class OrderRepository:
                 return ClaimResult.CLAIMED
 
             row = conn.execute(SELECT_STATUS, order_id).fetchone()
-            if row is not None and row.status == "reserved":
+            if row is not None and row.status == "ordered":
                 return ClaimResult.ALREADY_DONE
             return ClaimResult.IN_PROGRESS
 
-    def mark_done(self, ticket_id: str, operator_ref: str) -> None:
-        self._finish(MARK_SUCCESS, operator_ref, ticket_id)
+    def mark_done(self, order_id: str, operator_ref: str) -> None:
+        self._finish(MARK_SUCCESS, operator_ref, order_id)
 
     def mark_failed(self, order_id: str, error: str) -> None:
         self._finish(MARK_FAIL, error[:400], order_id)

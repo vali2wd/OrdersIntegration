@@ -8,11 +8,11 @@ class StoreOrderRequest(BaseModel):
 
 class WMSOrderRequest(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-    order_number: str
     reference_id: str
+    order_number: str
 
 def to_WMSRequest(order: StoreOrderRequest) -> WMSOrderRequest:
     return WMSOrderRequest(
+        reference_id = order.order_id,
         order_number = order.order_id,
-        reference_id = "reference-" + order.order_id, #TODO: e corect sa pasam order_id pentru reference_id?
     )

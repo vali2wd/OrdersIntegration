@@ -1,10 +1,10 @@
 import logging
 
-from Clients.WMSClient import WMSClient
+from Clients.wms_client import WMSClient
 from MQ.order_dto import StoreOrderRequest, to_WMSRequest
-from MQ.worker import TransientError, PermanentError
+from Errors.errors import TransientError, PermanentError
+from Persistence.Claims.order_claims import ClaimResult
 from Persistence.order_repo import OrderRepository
-from Persistence.repotrain import ClaimResult
 
 log = logging.getLogger("service")
 
@@ -23,10 +23,7 @@ class OrderService:
                 raise TransientError(f"ticket {storeOrderRequest.order_id} is being handled by another process")
 
             try:
-                order_response = self._wmsClient.create_order(
-                    to_WMSRequest(storeOrderRequest),
-                    idempotency_key=storeOrderRequest.order_id
-                )
+                order_response = self._wmsClient.order(storeOrderRequest)
             except PermanentError as pe:
                 self._order_repo.mark_failed(storeOrderRequest.order_id, str(pe))
                 raise

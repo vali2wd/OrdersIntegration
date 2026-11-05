@@ -8,7 +8,7 @@ from enum import StrEnum
 from botocore.exceptions import BotoCoreError, ClientError
 from pydantic import BaseModel, ValidationError
 
-from Errors import PermanentError, TransientError
+from Errors.errors import PermanentError, TransientError
 
 log = logging.getLogger("consumer")
 
@@ -128,12 +128,4 @@ class QueueConsumer[M: BaseModel]:
         self._sqs.delete_message(QueueUrl=self._queue_url, ReceiptHandle=env.receipt_handle)
 
     def _dead_letter(self, env: Envelope, reason: str) -> None:
-        log.error("dead-lettering %s: %s", env.message_id[:8], reason)
-        self._sqs.send_message(
-            QueueUrl=self._dlq_url,
-            MessageBody=env.body,
-            MessageGroupId=env.group_id or "default",
-            MessageDeduplicationId=env.message_id,
-            MessageAttributes={"reason": {"DataType": "String", "StringValue": reason[:256]}},
-        )
-        self._ack(env)
+        log.warning("dead letter requested: %s", reason)

@@ -1,33 +1,27 @@
 import logging
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+
 import httpx
-from httpx import TransportError
-from pydantic import BaseModel, ConfigDict, ValidationError
-from pydantic.alias_generators import to_camel
+from pydantic import ValidationError
 from tenacity import (
     RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     stop_after_delay,
     wait_exponential_jitter,
 )
 
-
-from Errors.AuthError import AuthError
-from Errors.PermanentError import PermanentError
-from Errors.RateLimitedError import RateLimitedError
+from Errors.errors import AuthError
+from Errors.errors import PermanentError
+from Errors.errors import RateLimitedError
 from MQ.order_dto import StoreOrderRequest, WMSOrderRequest
 
 API_URL = "http://localhost:5055"
 
 from Clients.Confirmation import Confirmation
-from Errors import TransientError
+from Errors.errors import TransientError
 
 log = logging.getLogger("wms_client")
 
@@ -59,31 +53,35 @@ class WMSClient:
             self._sleep = sleep
             self._backoff = wait_exponential_jitter(multiplier=0.5, max=max_wait_seconds)
 
-    def reserve(self, request, OrderRequest, idempotency_key: str) -> Confirmation:
+    def order(self, OrderRequest : WMSOrderRequest) -> Confirmation:
         retrying = Retrying(
             retry=retry_if_exception_type(TransientError),
             stop=stop_after_attempt(self._max_attempts) | stop_after_delay(self._max_total_seconds),
             wait=self._wait,
-            before_sleep=self._before_sleep_log(log, logging.WARNING),
             sleep=self._sleep,
             reraise=True
         )
 
-        return retrying(self._order_once, request, idempotency_key)
+        return retrying(self._order_once, OrderRequest)
 
-    def _order_once(self, request: StoreOrderRequest, idempotency_key: str)-> Confirmation:
+    def _order_once(self, request: WMSOrderRequest)-> Confirmation:
         try:
+            log.info("processing order %s, claim=%s", request.order_number, request.reference_id)
             response = self._client.post(
                 API_URL + "/api/orders",
-                json=request.model_dump(mode="json", by_alias=True),
-                headers={"Idempotency-Key": idempotency_key},
+                json=request.model_dump(mode="json")
             )
+            log.info("calling WMS for %s", request.order_number)
         except httpx.TimeoutException as te:
             raise TransientError(f"network error: {type(te).__name__}") from te
 
         return self._interpret(response)
 
-
+    def _wait(self, state: RetryCallState) -> float:
+        error = state.outcome.exception() if state.outcome else None
+        if isinstance(error, RateLimitedError) and error.retry_after is not None:
+            return min(error.retry_after, self._max_wait_seconds)
+        return self._backoff  # exponential backoff with jitter
 
     def _interpret(self, resp: httpx.Response) -> Confirmation:
         status = resp.status_code
@@ -94,7 +92,7 @@ class WMSClient:
             except ValidationError as ex:
                 # It probably succeeded, but we can't tell what it created. A human must look.
                 raise PermanentError(f"{status} with unreadable body: {ex.errors()[0]['msg']}") from ex
-            return Confirmation(operator_ref=body.order_number, replayed=status == 200)
+            return Confirmation(operator_ref=body.order_number, wms_id=body. replayed=status == 200)
 
         if status in (401, 403):
             raise AuthError(f"{status} from operator: check the API key")
