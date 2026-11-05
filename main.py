@@ -53,7 +53,7 @@ def main() -> None:
         signal.signal(signal.SIGTERM, lambda signum, frame: consumer.stop())
 
         consumer.run()  # blocks here until Ctrl+C or SIGTERM
-    # leaving `with` closes the HTTP connection pool
+
 
 
 if __name__ == "__main__":

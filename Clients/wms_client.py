@@ -90,7 +90,6 @@ class WMSClient:
             try:
                 body = WMSOrderResponse.model_validate_json(resp.content)
             except ValidationError as ex:
-                # It probably succeeded, but we can't tell what it created. A human must look.
                 raise PermanentError(f"{status} with unreadable body: {ex.errors()[0]['msg']}") from ex
             return Confirmation(operator_ref=body.order_number, wms_id=body.wms_id, replayed=status == 200)
 
@@ -107,5 +106,4 @@ class WMSClient:
         if status >= 500:
             raise TransientError(f"{status} from operator")
 
-        # 400, 404, 422 ...: the request itself is wrong. Retrying sends the same wrong request.
         raise PermanentError(f"{status} from operator: {problem_summary(resp)}")

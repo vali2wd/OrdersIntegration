@@ -117,7 +117,6 @@ class QueueConsumer[M: BaseModel]:
             return Outcome.RETRY_LATER
         except Exception:
             # Unknown failure: don't lose it. Leave it for redelivery; after
-            # maxReceiveCount the queue's redrive policy dead-letters it.
             log.exception("unexpected error on message %s", env.message_id[:8])
             return Outcome.RETRY_LATER
 

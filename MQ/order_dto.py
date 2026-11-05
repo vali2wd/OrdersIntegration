@@ -18,6 +18,6 @@ def to_WMSRequest(order: StoreOrderRequest) -> WMSOrderRequest:
     )
 
 class WMSOrderResponse(BaseModel):
-    wms_id: int = Field(validation_alias="id")   # read from "id", keep the clearer name in Python
+    wms_id: int = Field(validation_alias="id")
     reference_id: str
     order_number: str

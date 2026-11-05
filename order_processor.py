@@ -29,8 +29,7 @@ class OrderProcessor():
             )
         except Exception as ex:
             self._order_repo.mark_failed(order.order_id, str(ex))  # 'failed' rows can be claimed again later
-            raise  # the consumer decides: DLQ, retry, or stop
+            raise
 
-        # TODO: wms_ref, decide asupra lui
         self._order_repo.mark_done(order.order_id, wms_ref.wms_id)
         log.info("order %s sent to WMS as %s", order.order_id, wms_ref)
