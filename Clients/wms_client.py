@@ -16,11 +16,11 @@ from tenacity import (
 from Errors.errors import AuthError
 from Errors.errors import PermanentError
 from Errors.errors import RateLimitedError
-from MQ.order_dto import StoreOrderRequest, WMSOrderRequest
+from MQ.order_dto import StoreOrderRequest, WMSOrderRequest, WMSOrderResponse
 
 API_URL = "http://localhost:5055"
 
-from Clients.Confirmation import Confirmation
+from Clients.confirmation import Confirmation
 from Errors.errors import TransientError
 
 log = logging.getLogger("wms_client")
@@ -51,7 +51,7 @@ class WMSClient:
             self._max_total_seconds = max_total_seconds
             self._max_wait_seconds = max_wait_seconds
             self._sleep = sleep
-            self._backoff = wait_exponential_jitter(multiplier=0.5, max=max_wait_seconds)
+            self._backoff = wait_exponential_jitter(multiplier=0.5, max=self._max_wait_seconds)
 
     def order(self, OrderRequest : WMSOrderRequest) -> Confirmation:
         retrying = Retrying(
@@ -81,18 +81,18 @@ class WMSClient:
         error = state.outcome.exception() if state.outcome else None
         if isinstance(error, RateLimitedError) and error.retry_after is not None:
             return min(error.retry_after, self._max_wait_seconds)
-        return self._backoff  # exponential backoff with jitter
+        return self._backoff(state) # exponential backoff with jitter
 
     def _interpret(self, resp: httpx.Response) -> Confirmation:
         status = resp.status_code
 
         if status in (200, 201):
             try:
-                body = WMSOrderRequest.model_validate_json(resp.content)
+                body = WMSOrderResponse.model_validate_json(resp.content)
             except ValidationError as ex:
                 # It probably succeeded, but we can't tell what it created. A human must look.
                 raise PermanentError(f"{status} with unreadable body: {ex.errors()[0]['msg']}") from ex
-            return Confirmation(operator_ref=body.order_number, wms_id=body. replayed=status == 200)
+            return Confirmation(operator_ref=body.order_number, wms_id=body.wms_id, replayed=status == 200)
 
         if status in (401, 403):
             raise AuthError(f"{status} from operator: check the API key")

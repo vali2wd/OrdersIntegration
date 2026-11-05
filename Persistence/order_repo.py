@@ -17,7 +17,7 @@ class OrderRepository:
     def _connect(self):
         return closing(pyodbc.connect(self._conn_str))
 
-    def _finish(self, sql: str, value: str, order_id: str) -> None:
+    def _finish(self, sql: str, value: int, order_id: str) -> None:
         with self._connect() as conn, conn:
             if conn.execute(sql, value, order_id).rowcount != 1:
                 log.warning("ticket %s was no longer ours when finishing", order_id)
@@ -43,8 +43,8 @@ class OrderRepository:
                 return ClaimResult.ALREADY_DONE
             return ClaimResult.IN_PROGRESS
 
-    def mark_done(self, order_id: str, operator_ref: str) -> None:
-        self._finish(MARK_SUCCESS, operator_ref, order_id)
+    def mark_done(self, order_id: str, operator_id: int) -> None:
+        self._finish(MARK_SUCCESS, operator_id, order_id)
 
     def mark_failed(self, order_id: str, error: str) -> None:
         self._finish(MARK_FAIL, error[:400], order_id)

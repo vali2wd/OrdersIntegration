@@ -32,5 +32,5 @@ class OrderProcessor():
             raise  # the consumer decides: DLQ, retry, or stop
 
         # TODO: wms_ref, decide asupra lui
-        self._order_repo.mark_done(order.order_id, wms_ref.operator_ref)
+        self._order_repo.mark_done(order.order_id, wms_ref.wms_id)
         log.info("order %s sent to WMS as %s", order.order_id, wms_ref)
