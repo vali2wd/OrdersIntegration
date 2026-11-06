@@ -1,6 +1,6 @@
 from Clients.wms_client import WMSClient
 from Errors.errors import TransientError
-from MQ.order_dto import StoreOrderRequest, to_WMSRequest
+from MQ.order_dto import StoreOrderRequest, to_wms_request
 from Persistence.Claims.order_claims import ClaimResult
 from Persistence.order_repo import OrderRepository
 import logging
@@ -23,7 +23,7 @@ class OrderProcessor():
 
         # CLAIMED: this order is ours now
         try:
-            wms_request = to_WMSRequest(order)
+            wms_request = to_wms_request(order)
             wms_ref = self._wms.order(
                 wms_request
             )

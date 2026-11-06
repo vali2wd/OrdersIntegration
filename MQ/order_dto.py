@@ -7,11 +7,11 @@ class StoreOrderRequest(BaseModel):
     order_id: str
 
 class WMSOrderRequest(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    model_config = ConfigDict()#(alias_generator=to_camel, populate_by_name=True)
     order_number: str
     reference_id: str
 
-def to_WMSRequest(order: StoreOrderRequest) -> WMSOrderRequest:
+def to_wms_request(order: StoreOrderRequest) -> WMSOrderRequest:
     return WMSOrderRequest(
         order_number = order.order_id,
         reference_id = order.order_id,

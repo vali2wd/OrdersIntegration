@@ -27,13 +27,13 @@ log = logging.getLogger("wms_client")
 
 
 def problem_summary(resp: httpx.Response) -> str:
-    """ASP.NET returns application/problem+json for errors; use it if present."""
+    """ASP.NET returns application/problem+json for Errors; use it if present."""
     try:
         body = resp.json()
     except ValueError:
         return resp.text[:200]
     if isinstance(body, dict):
-        return str(body.get("detail") or body.get("title") or body.get("errors") or body)[:200]
+        return str(body.get("detail") or body.get("title") or body.get("Errors") or body)[:200]
     return str(body)[:200]
 
 class WMSClient:
@@ -53,7 +53,7 @@ class WMSClient:
             self._sleep = sleep
             self._backoff = wait_exponential_jitter(multiplier=0.5, max=self._max_wait_seconds)
 
-    def order(self, OrderRequest : WMSOrderRequest) -> Confirmation:
+    def order(self, order_request : WMSOrderRequest) -> Confirmation:
         retrying = Retrying(
             retry=retry_if_exception_type(TransientError),
             stop=stop_after_attempt(self._max_attempts) | stop_after_delay(self._max_total_seconds),
@@ -62,7 +62,7 @@ class WMSClient:
             reraise=True
         )
 
-        return retrying(self._order_once, OrderRequest)
+        return retrying(self._order_once, order_request)
 
     def _order_once(self, request: WMSOrderRequest)-> Confirmation:
         try:

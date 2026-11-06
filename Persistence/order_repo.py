@@ -20,7 +20,7 @@ class OrderRepository:
     def _finish(self, sql: str, value: int, order_id: str) -> None:
         with self._connect() as conn, conn:
             if conn.execute(sql, value, order_id).rowcount != 1:
-                log.warning("ticket %s was no longer ours when finishing", order_id)
+                log.warning("order %s was no longer ours when finishing", order_id)
 
     def try_claim(self, order_id: str) -> ClaimResult:
         with self._connect() as conn:
@@ -31,7 +31,7 @@ class OrderRepository:
             except pyodbc.IntegrityError as ex:
                 if not is_duplicate_key(ex):
                     raise
-                log.info("ticket %s already has a claim row", order_id)
+                log.info("order %s already has a claim row", order_id)
 
             with conn:
                 taken = conn.execute(CLAIM_UPDATE, order_id, -self._stale_minutes).rowcount == 1

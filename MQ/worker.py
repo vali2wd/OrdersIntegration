@@ -109,6 +109,9 @@ class QueueConsumer[M: BaseModel]:
 
         try:
             self._handler(item)
+            
+        # TODO: AuthError exception with loop stop (self.stop())
+
         except PermanentError as ex:
             self._dead_letter(env, str(ex))
             return Outcome.DEAD_LETTERED

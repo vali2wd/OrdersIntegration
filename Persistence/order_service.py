@@ -1,7 +1,7 @@
 import logging
 
 from Clients.wms_client import WMSClient
-from MQ.order_dto import StoreOrderRequest, to_WMSRequest
+from MQ.order_dto import StoreOrderRequest, to_wms_request
 from Errors.errors import TransientError, PermanentError
 from Persistence.Claims.order_claims import ClaimResult
 from Persistence.order_repo import OrderRepository
@@ -20,7 +20,7 @@ class OrderService:
                 log.info(f"Order {storeOrderRequest.order_id} already done")
                 return
             if claim is ClaimResult.IN_PROGRESS:
-                raise TransientError(f"ticket {storeOrderRequest.order_id} is being handled by another process")
+                raise TransientError(f"order {storeOrderRequest.order_id} is being handled by another process")
 
             try:
                 order_response = self._wmsClient.order(storeOrderRequest)

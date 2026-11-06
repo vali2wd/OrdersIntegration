@@ -14,10 +14,10 @@ log = logging.getLogger("orders")
 
 CONN_STR = (
     "Driver={ODBC Driver 18 for SQL Server};"
-    "Server=DESKTOP-9ICFBLJ\\V17;"                 # the same name you use in SSMS
+    "Server=DESKTOP-9ICFBLJ\\V17;"             
     "Database=OrdersProcessing;"
-    "Trusted_Connection=yes;"           # your Windows login, so no password needed locally
-    "TrustServerCertificate=yes;"       # Driver 18 encrypts by default; local dev only
+    "Trusted_Connection=yes;"           
+    "TrustServerCertificate=yes;"
 )
 
 def main() -> None:
@@ -49,11 +49,7 @@ def main() -> None:
         )
 
         signal.signal(signal.SIGINT, lambda signum, frame: consumer.stop())
-        signal.signal(signal.SIGTERM, lambda signum, frame: consumer.stop())
-
         consumer.run()  # blocks here until Ctrl+C or SIGTERM
-
-
 
 if __name__ == "__main__":
     main()
